@@ -5,12 +5,19 @@ import Link from 'next/link';
 import { getProperties, createQuote, type Property, type PropertyFilters } from '@/lib/api';
 import { PropertyCard } from '@/components/PropertyCard';
 import { PROPERTY_TYPES, DEFAULT_OWNER_ID } from '@/lib/constants';
+import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
+import { useAnalytics } from '@/lib/analytics';
+import { Search, SlidersHorizontal, X, Filter, List, LayoutGrid } from 'lucide-react';
 
 export default function SearchPage() {
+  const { track } = useAnalytics();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quoteCreated, setQuoteCreated] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Search filters
   const [propertyType, setPropertyType] = useState('');
@@ -21,6 +28,7 @@ export default function SearchPage() {
 
   useEffect(() => {
     loadProperties();
+    track('page_view', { path: '/buscar' });
   }, []);
 
   const loadProperties = async (filters?: PropertyFilters) => {
@@ -47,6 +55,13 @@ export default function SearchPage() {
       min_dormitorios: minDormitorios ? parseInt(minDormitorios) : undefined,
     };
 
+    track('search_performed', {
+      property_type: propertyType,
+      min_price: filters.min_price,
+      max_price: filters.max_price,
+      min_dormitorios: filters.min_dormitorios,
+    });
+
     // Create a quote for this search
     try {
       await createQuote({
@@ -59,12 +74,13 @@ export default function SearchPage() {
         currency: 'CLP',
       });
       setQuoteCreated(true);
+      track('filter_applied', { type: 'quote_created', filters });
     } catch (e) {
       console.error('Error creating quote:', e);
-      // Continue with search even if quote creation fails
     }
 
     await loadProperties(filters);
+    setMobileFiltersOpen(false);
   };
 
   const handleReset = () => {
@@ -75,181 +91,277 @@ export default function SearchPage() {
     setMinBanos('');
     setQuoteCreated(false);
     loadProperties();
+    track('search_performed', { action: 'reset' });
   };
 
+  const activeFiltersCount = [
+    propertyType, minPrice, maxPrice, minDormitorios, minBanos,
+  ].filter(Boolean).length;
+
+  const FiltersContent = () => (
+    <form onSubmit={handleSearch} className="space-y-5">
+      <div>
+        <label htmlFor="property_type" className="block text-sm font-medium text-text-primary mb-1.5">
+          Tipo de Propiedad
+        </label>
+        <select
+          id="property_type"
+          value={propertyType}
+          onChange={(e) => setPropertyType(e.target.value)}
+          className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+        >
+          <option value="">Todos</option>
+          {PROPERTY_TYPES.map((type) => (
+            <option key={type.value} value={type.value}>
+              {type.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label htmlFor="min_price" className="block text-sm font-medium text-text-primary mb-1.5">
+            Precio Mín.
+          </label>
+          <input
+            type="number"
+            id="min_price"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            placeholder="$"
+            className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+          />
+        </div>
+        <div>
+          <label htmlFor="max_price" className="block text-sm font-medium text-text-primary mb-1.5">
+            Precio Máx.
+          </label>
+          <input
+            type="number"
+            id="max_price"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            placeholder="$"
+            className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label htmlFor="min_dormitorios" className="block text-sm font-medium text-text-primary mb-1.5">
+            Dormitorios
+          </label>
+          <input
+            type="number"
+            id="min_dormitorios"
+            value={minDormitorios}
+            onChange={(e) => setMinDormitorios(e.target.value)}
+            placeholder="Min."
+            min="0"
+            className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+          />
+        </div>
+        <div>
+          <label htmlFor="min_banos" className="block text-sm font-medium text-text-primary mb-1.5">
+            Baños
+          </label>
+          <input
+            type="number"
+            id="min_banos"
+            value={minBanos}
+            onChange={(e) => setMinBanos(e.target.value)}
+            placeholder="Min."
+            min="0"
+            className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+          />
+        </div>
+      </div>
+
+      <div className="flex gap-2 pt-2">
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-hover transition-colors disabled:opacity-60"
+        >
+          <Search className="w-4 h-4" />
+          {loading ? 'Buscando...' : 'Buscar'}
+        </button>
+        {activeFiltersCount > 0 && (
+          <button
+            type="button"
+            onClick={handleReset}
+            className="px-4 py-2.5 bg-surface-muted text-text-secondary rounded-lg hover:bg-border transition-colors"
+            aria-label="Limpiar filtros"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {quoteCreated && (
+        <div className="p-3 bg-success-bg border border-success/20 rounded-lg">
+          <p className="text-sm text-success font-medium">
+            Búsqueda guardada exitosamente
+          </p>
+        </div>
+      )}
+    </form>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <Link href="/">
-              <h1 className="text-2xl font-bold text-blue-600">GM Propiedades</h1>
-            </Link>
-            <nav className="flex gap-4">
-              <Link
-                href="/buscar"
-                className="px-4 py-2 text-blue-600 font-medium"
+    <div className="min-h-screen flex flex-col bg-background">
+      <Navbar />
+
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Desktop Sidebar Filters */}
+          <aside className="hidden lg:block w-72 shrink-0">
+            <div className="sticky top-24 bg-surface rounded-2xl border border-border p-6 shadow-soft">
+              <div className="flex items-center gap-2 mb-5">
+                <SlidersHorizontal className="w-5 h-5 text-primary" />
+                <h2 className="font-display text-lg font-semibold text-text-primary">
+                  Filtros
+                </h2>
+                {activeFiltersCount > 0 && (
+                  <span className="ml-auto px-2 py-0.5 bg-primary/10 text-primary text-xs font-semibold rounded-full">
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </div>
+              <FiltersContent />
+            </div>
+          </aside>
+
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h1 className="font-display text-2xl sm:text-3xl font-bold text-text-primary">
+                  Buscar Propiedades
+                </h1>
+                <p className="text-sm text-text-secondary mt-1">
+                  {loading
+                    ? 'Cargando...'
+                    : `${properties.length} propiedades encontradas`}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Mobile Filter Button */}
+                <button
+                  onClick={() => setMobileFiltersOpen(true)}
+                  className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-lg text-sm font-medium text-text-primary hover:bg-surface-muted transition-colors"
+                >
+                  <Filter className="w-4 h-4" />
+                  Filtros
+                  {activeFiltersCount > 0 && (
+                    <span className="px-1.5 py-0.5 bg-primary text-white text-xs rounded-full">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* View Toggle */}
+                <div className="flex items-center bg-surface border border-border rounded-lg p-0.5">
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 rounded-md transition-colors ${
+                      viewMode === 'grid'
+                        ? 'bg-surface-muted text-primary'
+                        : 'text-text-muted hover:text-text-secondary'
+                    }`}
+                    aria-label="Vista grid"
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 rounded-md transition-colors ${
+                      viewMode === 'list'
+                        ? 'bg-surface-muted text-primary'
+                        : 'text-text-muted hover:text-text-secondary'
+                    }`}
+                    aria-label="Vista lista"
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Results */}
+            {error ? (
+              <div className="bg-error-bg border border-error/20 rounded-2xl p-8 text-center">
+                <p className="text-error font-medium mb-2">Error al cargar propiedades</p>
+                <p className="text-text-secondary text-sm">{error}</p>
+              </div>
+            ) : loading ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin mb-4" />
+                <p className="text-text-secondary">Cargando propiedades...</p>
+              </div>
+            ) : properties.length === 0 ? (
+              <div className="bg-warning-bg border border-warning/20 rounded-2xl p-8 text-center">
+                <p className="text-warning font-medium mb-2">
+                  No se encontraron propiedades
+                </p>
+                <p className="text-text-secondary text-sm mb-6">
+                  Intenta ajustar los filtros de búsqueda
+                </p>
+                <button
+                  onClick={handleReset}
+                  className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-medium"
+                >
+                  Limpiar Filtros
+                </button>
+              </div>
+            ) : (
+              <div
+                className={`grid gap-6 ${
+                  viewMode === 'grid'
+                    ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3'
+                    : 'grid-cols-1'
+                }`}
               >
-                Buscar
-              </Link>
-              <Link
-                href="/publicar"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
-              >
-                Publicar Propiedad
-              </Link>
-            </nav>
+                {properties.map((property) => (
+                  <PropertyCard key={property.id} property={property} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-6">
-          Buscar Propiedades
-        </h2>
-
-        {/* Search Form */}
-        <form onSubmit={handleSearch} className="bg-white p-6 rounded-lg shadow-md mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label htmlFor="property_type" className="block text-sm font-medium text-gray-700 mb-1">
-                Tipo de Propiedad
-              </label>
-              <select
-                id="property_type"
-                value={propertyType}
-                onChange={(e) => setPropertyType(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Todos</option>
-                {PROPERTY_TYPES.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="min_price" className="block text-sm font-medium text-gray-700 mb-1">
-                Precio Mínimo (CLP)
-              </label>
-              <input
-                type="number"
-                id="min_price"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                placeholder="Ej: 50000000"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="max_price" className="block text-sm font-medium text-gray-700 mb-1">
-                Precio Máximo (CLP)
-              </label>
-              <input
-                type="number"
-                id="max_price"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                placeholder="Ej: 200000000"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="min_dormitorios" className="block text-sm font-medium text-gray-700 mb-1">
-                Dormitorios Mínimos
-              </label>
-              <input
-                type="number"
-                id="min_dormitorios"
-                value={minDormitorios}
-                onChange={(e) => setMinDormitorios(e.target.value)}
-                placeholder="Ej: 2"
-                min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="min_banos" className="block text-sm font-medium text-gray-700 mb-1">
-                Baños Mínimos
-              </label>
-              <input
-                type="number"
-                id="min_banos"
-                value={minBanos}
-                onChange={(e) => setMinBanos(e.target.value)}
-                placeholder="Ej: 1"
-                min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium disabled:bg-gray-400"
-            >
-              {loading ? 'Buscando...' : 'Buscar'}
-            </button>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors font-medium"
-            >
-              Limpiar
-            </button>
-          </div>
-
-          {quoteCreated && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
-              <p className="text-sm text-green-800">
-                ✓ Búsqueda guardada exitosamente
-              </p>
-            </div>
-          )}
-        </form>
-
-        {/* Results */}
-        {error ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <p className="text-red-800 font-medium mb-2">Error al cargar propiedades</p>
-            <p className="text-red-600 text-sm">{error}</p>
-          </div>
-        ) : loading ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600">Cargando propiedades...</p>
-          </div>
-        ) : properties.length === 0 ? (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-            <p className="text-yellow-800 font-medium mb-2">
-              No se encontraron propiedades
-            </p>
-            <p className="text-yellow-700 text-sm">
-              Intenta ajustar los filtros de búsqueda
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="mb-4">
-              <p className="text-gray-600">
-                Se encontraron <span className="font-semibold">{properties.length}</span> propiedades
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {properties.map((property) => (
-                <PropertyCard key={property.id} property={property} />
-              ))}
-            </div>
-          </>
-        )}
       </main>
+
+      {/* Mobile Filters Drawer */}
+      {mobileFiltersOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+            onClick={() => setMobileFiltersOpen(false)}
+          />
+          <div className="fixed inset-y-0 left-0 w-80 max-w-[85vw] bg-surface z-50 shadow-2xl lg:hidden overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-display text-lg font-semibold text-text-primary">
+                  Filtros
+                </h2>
+                <button
+                  onClick={() => setMobileFiltersOpen(false)}
+                  className="p-2 rounded-lg hover:bg-surface-muted transition-colors"
+                >
+                  <X className="w-5 h-5 text-text-secondary" />
+                </button>
+              </div>
+              <FiltersContent />
+            </div>
+          </div>
+        </>
+      )}
+
+      <Footer />
     </div>
   );
 }

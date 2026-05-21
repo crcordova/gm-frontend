@@ -1,13 +1,17 @@
 import Link from 'next/link';
 import { getProperties, type Property } from '@/lib/api';
 import { PropertyCard } from '@/components/PropertyCard';
+import { HeroSection } from '@/components/HeroSection';
+import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
+import { Search, ArrowRight } from 'lucide-react';
 
 export default async function Home() {
   let properties: Property[] = [];
   let error: string | null = null;
 
   try {
-    const result = await getProperties({ limit: 12 });
+    const result = await getProperties({ limit: 6 });
     properties = Array.isArray(result) ? result : [];
   } catch (e) {
     error = e instanceof Error ? e.message : 'Error al cargar propiedades';
@@ -15,79 +19,49 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <Link href="/">
-              <h1 className="text-2xl font-bold text-blue-600">GM Propiedades</h1>
-            </Link>
-            <nav className="flex gap-4">
-              <Link
-                href="/buscar"
-                className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors"
-              >
-                Buscar
-              </Link>
-              <Link
-                href="/publicar"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
-              >
-                Publicar Propiedad
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen flex flex-col bg-background">
+      <Navbar />
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold mb-4">
-            Encuentra tu Propiedad Ideal en Chile
-          </h2>
-          <p className="text-xl mb-8 text-blue-100">
-            Miles de propiedades disponibles en todo el país
-          </p>
+      <HeroSection />
+
+      {/* Featured Properties */}
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 w-full">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+          <div>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-2">
+              Propiedades Destacadas
+            </h2>
+            <p className="text-text-secondary">
+              Explora las últimas propiedades disponibles en todo Chile
+            </p>
+          </div>
           <Link
             href="/buscar"
-            className="inline-block px-8 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-hover transition-colors"
           >
-            Comenzar Búsqueda
+            Ver todas
+            <ArrowRight className="w-4 h-4" />
           </Link>
-        </div>
-      </section>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">
-            Propiedades Destacadas
-          </h3>
-          <p className="text-gray-600">
-            Explora las últimas propiedades disponibles
-          </p>
         </div>
 
         {error ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <p className="text-red-800 font-medium mb-2">Error al cargar propiedades</p>
-            <p className="text-red-600 text-sm mb-4">{error}</p>
-            <div className="text-gray-600 text-sm space-y-2">
-              <p className="font-medium">Verifica que:</p>
-              <ul className="list-disc list-inside text-left max-w-md mx-auto">
+          <div className="bg-error-bg border border-error/20 rounded-2xl p-8 text-center">
+            <p className="text-error font-medium mb-2">Error al cargar propiedades</p>
+            <p className="text-text-secondary text-sm mb-6">{error}</p>
+            <div className="text-text-secondary text-sm space-y-2 max-w-lg mx-auto">
+              <p className="font-medium text-text-primary">Verifica que:</p>
+              <ul className="list-disc list-inside text-left">
                 <li>El backend esté ejecutándose en http://localhost:8000</li>
                 <li>La base de datos esté conectada</li>
                 <li>No haya errores de CORS</li>
               </ul>
               <p className="mt-4">
                 Prueba abrir:{' '}
-                <a 
-                  href="http://localhost:8000/docs" 
-                  target="_blank" 
+                <a
+                  href="http://localhost:8000/docs"
+                  target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
+                  className="text-primary hover:underline"
                 >
                   http://localhost:8000/docs
                 </a>
@@ -95,46 +69,84 @@ export default async function Home() {
             </div>
           </div>
         ) : properties.length === 0 ? (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-            <p className="text-yellow-800 font-medium mb-2">No hay propiedades disponibles</p>
-            <p className="text-yellow-700 text-sm mb-4">
-              Sé el primero en publicar una propiedad
+          <div className="bg-warning-bg border border-warning/20 rounded-2xl p-8 text-center">
+            <p className="text-warning font-medium mb-2">No hay propiedades disponibles</p>
+            <p className="text-text-secondary text-sm mb-6">
+              Sé el primero en publicar una propiedad en nuestra plataforma
             </p>
             <Link
               href="/publicar"
-              className="inline-block px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-medium"
             >
+              <Search className="w-4 h-4" />
               Publicar Propiedad
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {properties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
-            ))}
-          </div>
-        )}
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {properties.map((property) => (
+                <PropertyCard key={property.id} property={property} />
+              ))}
+            </div>
 
-        {properties.length > 0 && (
-          <div className="mt-8 text-center">
-            <Link
-              href="/buscar"
-              className="inline-block px-6 py-3 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
-            >
-              Ver Todas las Propiedades
-            </Link>
-          </div>
+            <div className="mt-12 text-center">
+              <Link
+                href="/buscar"
+                className="inline-flex items-center gap-2 px-8 py-3.5 border-2 border-primary text-primary rounded-xl font-semibold hover:bg-primary hover:text-white transition-all duration-200"
+              >
+                <Search className="w-5 h-5" />
+                Ver Todas las Propiedades
+              </Link>
+            </div>
+          </>
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white mt-16 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-gray-400">
-            © 2025 GM Propiedades - Marketplace Inmobiliario de Chile
-          </p>
+      {/* Why Us Section */}
+      <section className="bg-surface border-y border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="text-center mb-12">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-3">
+              ¿Por qué elegir GM Propiedades?
+            </h2>
+            <p className="text-text-secondary max-w-2xl mx-auto">
+              La plataforma más completa para comprar, vender y arrendar propiedades en Chile
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {[
+              {
+                title: 'Búsqueda Inteligente',
+                description: 'Filtra por ubicación, precio, características y encuentra exactamente lo que buscas.',
+              },
+              {
+                title: 'Publicación Gratuita',
+                description: 'Publica tus propiedades sin costo y llega a miles de potenciales compradores.',
+              },
+              {
+                title: 'Seguridad Garantizada',
+                description: 'Todas las propiedades son verificadas para tu tranquilidad.',
+              },
+            ].map((feature) => (
+              <div
+                key={feature.title}
+                className="p-6 sm:p-8 rounded-2xl bg-background border border-border-subtle hover:shadow-soft transition-shadow duration-300"
+              >
+                <h3 className="font-display text-lg font-semibold text-text-primary mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-text-secondary leading-relaxed">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
-      </footer>
+      </section>
+
+      <Footer />
     </div>
   );
 }

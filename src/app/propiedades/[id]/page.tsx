@@ -1,5 +1,22 @@
 import Link from 'next/link';
 import { getProperty, formatPrice, getPropertyTypeLabel } from '@/lib/api';
+import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
+import {
+  Bed,
+  Bath,
+  Square,
+  Car,
+  MapPin,
+  Home,
+  ArrowLeft,
+  Phone,
+  Mail,
+  Heart,
+  Share2,
+  Calendar,
+  Tag,
+} from 'lucide-react';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -11,7 +28,6 @@ export default async function PropertyDetailPage({ params }: PageProps) {
   let error = null;
 
   try {
-    // ID is already a string (UUID), no need to parse
     property = await getProperty(id);
   } catch (e) {
     error = e instanceof Error ? e.message : 'Error al cargar la propiedad';
@@ -19,162 +35,133 @@ export default async function PropertyDetailPage({ params }: PageProps) {
 
   if (error || !property) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <Link href="/">
-              <h1 className="text-2xl font-bold text-blue-600">GM Propiedades</h1>
-            </Link>
-          </div>
-        </header>
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <p className="text-red-800 font-medium mb-2">Propiedad no encontrada</p>
-            <p className="text-red-600 text-sm mb-4">{error}</p>
+        <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="bg-error-bg border border-error/20 rounded-2xl p-8 text-center max-w-xl mx-auto">
+            <p className="text-error font-medium mb-2 text-lg">Propiedad no encontrada</p>
+            <p className="text-text-secondary text-sm mb-6">{error}</p>
             <Link
               href="/"
-              className="inline-block px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-medium"
             >
+              <ArrowLeft className="w-4 h-4" />
               Volver al Inicio
             </Link>
           </div>
         </main>
+
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <Link href="/">
-              <h1 className="text-2xl font-bold text-blue-600">GM Propiedades</h1>
-            </Link>
-            <nav className="flex gap-4">
-              <Link
-                href="/buscar"
-                className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors"
-              >
-                Buscar
-              </Link>
-              <Link
-                href="/publicar"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
-              >
-                Publicar Propiedad
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen flex flex-col bg-background">
+      <Navbar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 w-full">
         {/* Breadcrumb */}
-        <div className="mb-6">
-          <Link href="/" className="text-blue-600 hover:underline">
+        <nav className="flex items-center gap-2 text-sm text-text-secondary mb-6">
+          <Link href="/" className="hover:text-primary transition-colors">
             Inicio
           </Link>
-          <span className="mx-2 text-gray-400">/</span>
-          <Link href="/buscar" className="text-blue-600 hover:underline">
+          <span className="text-text-muted">/</span>
+          <Link href="/buscar" className="hover:text-primary transition-colors">
             Buscar
           </Link>
-          <span className="mx-2 text-gray-400">/</span>
-          <span className="text-gray-600">{property.title}</span>
-        </div>
+          <span className="text-text-muted">/</span>
+          <span className="text-text-primary truncate max-w-[200px] sm:max-w-md">
+            {property.title}
+          </span>
+        </nav>
 
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          {/* Header Section */}
-          <div className="p-6 border-b">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {property.title}
-                </h1>
-                <p className="text-lg text-gray-600">
-                  {property.comuna?.name}
-                  {property.comuna?.province && `, ${property.comuna.province.name}`}
-                  {property.comuna?.province?.region && ` - ${property.comuna.province.region.name}`}
-                </p>
-                {property.barrio && (
-                  <p className="text-gray-500">Barrio: {property.barrio}</p>
-                )}
-                {property.direccion && (
-                  <p className="text-gray-500">{property.direccion}</p>
-                )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Image Placeholder */}
+            <div className="relative h-64 sm:h-96 bg-surface-muted rounded-2xl border border-border overflow-hidden">
+              <div className="absolute inset-0 flex items-center justify-center bg-primary/5">
+                <Home className="w-16 h-16 text-primary/20" />
               </div>
-              <div className="text-right">
-                <p className="text-3xl font-bold text-blue-600">
-                  {formatPrice(property.price, property.currency)}
-                </p>
-                <p className="text-sm text-gray-500">
+              <div className="absolute top-4 left-4">
+                <span className="px-3 py-1.5 rounded-lg bg-surface/90 backdrop-blur-sm text-xs font-semibold text-text-primary border border-border shadow-sm">
+                  <Tag className="w-3 h-3 inline mr-1" />
                   {getPropertyTypeLabel(property.property_type)}
-                </p>
+                </span>
               </div>
+              {property.status && property.status !== 'activo' && (
+                <div className="absolute top-4 right-4">
+                  <span className="px-3 py-1.5 rounded-lg bg-surface/90 backdrop-blur-sm text-xs font-semibold text-text-secondary border border-border shadow-sm">
+                    {property.status.toUpperCase()}
+                  </span>
+                </div>
+              )}
             </div>
 
-            {property.status && property.status !== 'activo' && (
-              <div className="inline-block px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold">
-                {property.status.toUpperCase()}
+            {/* Title & Price */}
+            <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-soft">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+                <div className="flex-1">
+                  <h1 className="font-display text-2xl sm:text-3xl font-bold text-text-primary mb-2">
+                    {property.title}
+                  </h1>
+                  <p className="text-text-secondary flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4 text-primary shrink-0" />
+                    {property.comuna?.name}
+                    {property.comuna?.province && `, ${property.comuna.province.name}`}
+                    {property.comuna?.province?.region && ` - ${property.comuna.province.region.name}`}
+                  </p>
+                  {property.barrio && (
+                    <p className="text-sm text-text-muted mt-1">
+                      Barrio: {property.barrio}
+                    </p>
+                  )}
+                  {property.direccion && (
+                    <p className="text-sm text-text-muted mt-0.5">
+                      {property.direccion}
+                    </p>
+                  )}
+                </div>
+                <div className="shrink-0 text-left sm:text-right">
+                  <p className="font-display text-3xl font-bold text-accent">
+                    {formatPrice(property.price, property.currency)}
+                  </p>
+                  <p className="text-sm text-text-muted mt-1">
+                    Publicado el {property.created_at ? new Date(property.created_at).toLocaleDateString('es-CL') : 'N/A'}
+                  </p>
+                </div>
               </div>
-            )}
-          </div>
 
-          {/* Main Content */}
-          <div className="p-6">
-            {/* Key Features */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-              {property.m2_construidos && (
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {property.m2_construidos}
-                  </p>
-                  <p className="text-sm text-gray-600">M² Construidos</p>
-                </div>
-              )}
-              {property.m2_totales && (
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {property.m2_totales}
-                  </p>
-                  <p className="text-sm text-gray-600">M² Totales</p>
-                </div>
-              )}
-              {property.dormitorios !== undefined && (
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {property.dormitorios}
-                  </p>
-                  <p className="text-sm text-gray-600">Dormitorios</p>
-                </div>
-              )}
-              {property.banos !== undefined && (
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {property.banos}
-                  </p>
-                  <p className="text-sm text-gray-600">Baños</p>
-                </div>
-              )}
-              {property.estacionamientos !== undefined && (
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {property.estacionamientos}
-                  </p>
-                  <p className="text-sm text-gray-600">Estacionamientos</p>
-                </div>
-              )}
+              {/* Quick Features */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-border-subtle">
+                {[
+                  { icon: Square, value: property.m2_construidos, label: 'M² Construidos' },
+                  { icon: Square, value: property.m2_totales, label: 'M² Totales' },
+                  { icon: Bed, value: property.dormitorios, label: 'Dormitorios' },
+                  { icon: Bath, value: property.banos, label: 'Baños' },
+                  { icon: Car, value: property.estacionamientos, label: 'Estacionamientos' },
+                ].filter((f) => f.value !== undefined && f.value !== null).map((feature) => (
+                  <div
+                    key={feature.label}
+                    className="flex flex-col items-center p-3 bg-surface-muted rounded-xl"
+                  >
+                    <feature.icon className="w-5 h-5 text-primary mb-1" />
+                    <span className="font-display text-lg font-bold text-text-primary">{feature.value}</span>
+                    <span className="text-xs text-text-muted text-center">{feature.label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Description */}
             {property.description && (
-              <div className="mb-8">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-3">
+              <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-soft">
+                <h2 className="font-display text-xl font-semibold text-text-primary mb-4">
                   Descripción
                 </h2>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                <p className="text-text-secondary leading-relaxed whitespace-pre-line">
                   {property.description}
                 </p>
               </div>
@@ -182,14 +169,14 @@ export default async function PropertyDetailPage({ params }: PageProps) {
 
             {/* Features */}
             {property.features && Object.keys(property.features).length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-3">
+              <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-soft">
+                <h2 className="font-display text-xl font-semibold text-text-primary mb-4">
                   Características Adicionales
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {Object.entries(property.features).map(([key, value]) => (
-                    <div key={key} className="flex items-center gap-2 text-gray-700">
-                      <span className="font-medium capitalize">
+                    <div key={key} className="flex items-center gap-2 text-text-secondary p-3 bg-surface-muted rounded-lg">
+                      <span className="font-medium capitalize text-text-primary">
                         {key.replace(/_/g, ' ')}:
                       </span>
                       <span>{String(value)}</span>
@@ -200,10 +187,10 @@ export default async function PropertyDetailPage({ params }: PageProps) {
             )}
 
             {/* Amenities */}
-            {((property.amenities && property.amenities.length > 0) || 
+            {((property.amenities && property.amenities.length > 0) ||
               (property.amenity_keys && property.amenity_keys.length > 0)) && (
-              <div className="mb-8">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-3">
+              <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-soft">
+                <h2 className="font-display text-xl font-semibold text-text-primary mb-4">
                   Amenidades
                 </h2>
                 <div className="flex flex-wrap gap-2">
@@ -211,7 +198,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
                     property.amenities.map((amenity) => (
                       <span
                         key={amenity.id}
-                        className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                        className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium border border-primary/20"
                       >
                         {amenity.label}
                       </span>
@@ -220,7 +207,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
                     property.amenity_keys.map((amenity) => (
                       <span
                         key={amenity}
-                        className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                        className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium border border-primary/20"
                       >
                         {amenity.replace(/_/g, ' ')}
                       </span>
@@ -229,37 +216,89 @@ export default async function PropertyDetailPage({ params }: PageProps) {
                 </div>
               </div>
             )}
+          </div>
 
-            {/* Contact Section */}
-            <div className="mt-8 p-6 bg-blue-50 rounded-lg">
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
-                ¿Interesado en esta propiedad?
-              </h2>
-              <p className="text-gray-700 mb-4">
-                Contáctanos para más información o para agendar una visita.
-              </p>
-              <div className="flex gap-4">
-                <button className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium">
-                  Contactar
-                </button>
-                <button className="px-6 py-3 border-2 border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors font-medium">
-                  Guardar
-                </button>
+          {/* Sidebar */}
+          <aside className="lg:col-span-1">
+            <div className="sticky top-24 space-y-6">
+              {/* Contact Card */}
+              <div className="bg-surface rounded-2xl border border-border p-6 shadow-soft">
+                <h3 className="font-display text-lg font-semibold text-text-primary mb-4">
+                  ¿Interesado en esta propiedad?
+                </h3>
+                <p className="text-sm text-text-secondary mb-6">
+                  Contáctanos para más información o para agendar una visita presencial.
+                </p>
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-hover transition-colors"
+                  >
+                    <Phone className="w-4 h-4" />
+                    Contactar
+                  </button>
+                  <button
+                    type="button"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-primary text-primary rounded-xl font-semibold hover:bg-primary/5 transition-colors"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Agendar Visita
+                  </button>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="bg-surface rounded-2xl border border-border p-6 shadow-soft">
+                <div className="flex flex-col gap-3">
+                  <button
+                    type="button"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-muted rounded-xl transition-colors"
+                  >
+                    <Heart className="w-4 h-4" />
+                    Guardar Favorito
+                  </button>
+                  <button
+                    type="button"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-muted rounded-xl transition-colors"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    Compartir
+                  </button>
+                </div>
+              </div>
+
+              {/* Agent Info */}
+              <div className="bg-primary rounded-2xl p-6 text-white">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                    <Mail className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="font-semibold">Agente GM Propiedades</p>
+                    <p className="text-sm text-white/80">Contacto directo</p>
+                  </div>
+                </div>
+                <p className="text-sm text-white/80 leading-relaxed">
+                  Nuestros agentes están disponibles para ayudarte en todo el proceso de compra, venta o arriendo.
+                </p>
               </div>
             </div>
-          </div>
+          </aside>
         </div>
 
         {/* Back Button */}
-        <div className="mt-6">
+        <div className="mt-8">
           <Link
             href="/buscar"
-            className="inline-block px-6 py-2 text-blue-600 hover:text-blue-700 font-medium"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-hover transition-colors"
           >
-            ← Volver a la búsqueda
+            <ArrowLeft className="w-4 h-4" />
+            Volver a la búsqueda
           </Link>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }
