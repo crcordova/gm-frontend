@@ -171,16 +171,42 @@ export default function PublicarPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const goToNextStep = () => {
+    if (canProceed()) {
+      setCurrentStep((prev) => prev + 1);
+    }
+  };
+
+  const goToPrevStep = () => {
+    setCurrentStep((prev) => prev - 1);
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Enter en pasos 1-3 avanza al siguiente paso
+    // Enter en paso 4 NO hace nada (el usuario debe clickear "Publicar Propiedad")
+    if (currentStep < 4) {
+      goToNextStep();
+    }
+  };
+
+  const handlePublish = async () => {
     setLoading(true);
     setError(null);
     setSuccess(false);
     track('property_publish_started');
 
     try {
-      if (!formData.title || !formData.property_type || !formData.price || !formData.comuna_id) {
-        throw new Error('Por favor completa todos los campos obligatorios');
+      if (!formData.title || !formData.description || !formData.property_type || !formData.price || !formData.comuna_id) {
+        throw new Error('Por favor completa todos los campos obligatorios: Título, Descripción, Tipo, Precio y Comuna');
+      }
+
+      if (!formData.m2_construidos || formData.m2_construidos <= 0) {
+        throw new Error('Los M² Construidos son obligatorios y deben ser mayores a 0');
+      }
+
+      if (!formData.direccion || formData.direccion.trim().length === 0) {
+        throw new Error('La dirección es obligatoria');
       }
 
       const propertyData: PropertyCreate = {
@@ -192,6 +218,7 @@ export default function PublicarPage() {
         property_type: formData.property_type,
         price: formData.price,
         comuna_id: formData.comuna_id,
+        amenity_count: selectedAmenities.length,
       });
 
       const property = await createProperty(propertyData);
@@ -218,8 +245,9 @@ export default function PublicarPage() {
   ];
 
   const canProceed = () => {
-    if (currentStep === 1) return formData.title && formData.price;
-    if (currentStep === 3) return formData.comuna_id;
+    if (currentStep === 1) return formData.title && formData.description && formData.price && formData.property_type;
+    if (currentStep === 2) return formData.m2_construidos && formData.m2_construidos > 0;
+    if (currentStep === 3) return formData.comuna_id && formData.direccion && formData.direccion.trim().length > 0;
     return true;
   };
 
@@ -246,6 +274,7 @@ export default function PublicarPage() {
                   onClick={() => {
                     if (step.id < currentStep) setCurrentStep(step.id);
                   }}
+                  type="button"
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     currentStep === step.id
                       ? 'bg-primary text-white'
@@ -282,7 +311,7 @@ export default function PublicarPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-surface rounded-2xl border border-border shadow-soft p-6 sm:p-8">
+        <form onSubmit={handleFormSubmit} className="bg-surface rounded-2xl border border-border shadow-soft p-6 sm:p-8">
           {/* Step 1: Basic Info */}
           {currentStep === 1 && (
             <div className="space-y-6 animate-in fade-in duration-300">
@@ -304,7 +333,7 @@ export default function PublicarPage() {
 
               <div>
                 <label htmlFor="description" className="block text-sm font-medium text-text-primary mb-1.5">
-                  Descripción
+                  Descripción <span className="text-error">*</span>
                 </label>
                 <textarea
                   id="description"
@@ -312,6 +341,7 @@ export default function PublicarPage() {
                   value={formData.description || ''}
                   onChange={handleChange}
                   rows={4}
+                  required
                   placeholder="Describe la propiedad en detalle..."
                   className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all resize-none"
                 />
@@ -409,7 +439,7 @@ export default function PublicarPage() {
                   <label htmlFor="m2_construidos" className="block text-sm font-medium text-text-primary mb-1.5">
                     <span className="inline-flex items-center gap-1.5">
                       <Ruler className="w-3.5 h-3.5 text-text-muted" />
-                      M² Construidos
+                      M² Construidos <span className="text-error">*</span>
                     </span>
                   </label>
                   <input
@@ -418,7 +448,8 @@ export default function PublicarPage() {
                     name="m2_construidos"
                     value={formData.m2_construidos || ''}
                     onChange={handleChange}
-                    min="0"
+                    required
+                    min="1"
                     placeholder="Ej: 150"
                     className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                   />
@@ -586,7 +617,7 @@ export default function PublicarPage() {
                 <label htmlFor="direccion" className="block text-sm font-medium text-text-primary mb-1.5">
                   <span className="inline-flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-text-muted" />
-                    Dirección
+                    Dirección <span className="text-error">*</span>
                   </span>
                 </label>
                 <input
@@ -595,6 +626,7 @@ export default function PublicarPage() {
                   name="direccion"
                   value={formData.direccion || ''}
                   onChange={handleChange}
+                  required
                   placeholder="Ej: Av. Apoquindo 1234"
                   className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                 />
@@ -759,7 +791,7 @@ export default function PublicarPage() {
               {currentStep > 1 ? (
                 <button
                   type="button"
-                  onClick={() => setCurrentStep(currentStep - 1)}
+                  onClick={goToPrevStep}
                   className="px-5 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
                 >
                   Atrás
@@ -778,7 +810,7 @@ export default function PublicarPage() {
               {currentStep < 4 ? (
                 <button
                   type="button"
-                  onClick={() => setCurrentStep(currentStep + 1)}
+                  onClick={goToNextStep}
                   disabled={!canProceed()}
                   className="px-6 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -786,7 +818,8 @@ export default function PublicarPage() {
                 </button>
               ) : (
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handlePublish}
                   disabled={loading || success}
                   className="inline-flex items-center gap-2 px-6 py-2.5 bg-accent text-white rounded-lg font-medium hover:bg-accent-hover transition-colors disabled:opacity-60"
                 >

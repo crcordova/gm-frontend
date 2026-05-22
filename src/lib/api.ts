@@ -173,18 +173,39 @@ export async function getProperty(id: string): Promise<Property> {
   return response.json();
 }
 
+// Parse FastAPI error responses into human-readable messages
+function parseApiError(data: any): string {
+  if (typeof data.detail === 'string') {
+    return data.detail;
+  }
+  if (Array.isArray(data.detail)) {
+    // FastAPI validation error format: [{ loc: ['body', 'field'], msg: '...', type: '...' }]
+    const messages = data.detail.map((err: any) => {
+      if (typeof err === 'string') return err;
+      const field = err.loc?.filter((l: string) => l !== 'body').join('.') || 'campo';
+      const msg = err.msg || 'Error de validación';
+      return `${field}: ${msg}`;
+    });
+    return messages.join('; ');
+  }
+  if (data.message && typeof data.message === 'string') {
+    return data.message;
+  }
+  return 'Error desconocido del servidor';
+}
+
 export async function createProperty(data: PropertyCreate): Promise<Property> {
   const response = await fetch(`${API_BASE}/api/v1/properties/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  
+
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to create property');
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(parseApiError(errorData));
   }
-  
+
   return response.json();
 }
 
@@ -195,12 +216,12 @@ export async function createQuote(data: QuoteCreate): Promise<Quote> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  
+
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to create quote');
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(parseApiError(errorData));
   }
-  
+
   return response.json();
 }
 

@@ -3,11 +3,10 @@
 export const PROPERTY_TYPES = [
   { value: 'casa', label: 'Casa' },
   { value: 'departamento', label: 'Departamento' },
-  { value: 'parcela', label: 'Parcela' },
+  { value: 'terreno', label: 'Terreno' },
   { value: 'oficina', label: 'Oficina' },
   { value: 'local_comercial', label: 'Local Comercial' },
   { value: 'bodega', label: 'Bodega' },
-  { value: 'sitio', label: 'Sitio' },
 ];
 
 export const PROPERTY_STATUS = [
@@ -27,9 +26,8 @@ export const CONSTRUCTION_MATERIALS = [
   { value: 'hormigon', label: 'Hormigón' },
   { value: 'ladrillo', label: 'Ladrillo' },
   { value: 'madera', label: 'Madera' },
-  { value: 'metalica', label: 'Metálica' },
-  { value: 'mixta', label: 'Mixta' },
-  { value: 'adobe', label: 'Adobe' },
+  { value: 'acero', label: 'Acero' },
+  { value: 'mixto', label: 'Mixto' },
   { value: 'otro', label: 'Otro' },
 ];
 
@@ -38,15 +36,13 @@ export const WINDOW_MATERIALS = [
   { value: 'pvc', label: 'PVC' },
   { value: 'madera', label: 'Madera' },
   { value: 'termopanel', label: 'Termopanel' },
-  { value: 'otro', label: 'Otro' },
 ];
 
 export const ROOF_TYPES = [
   { value: 'teja', label: 'Teja' },
   { value: 'zinc', label: 'Zinc' },
   { value: 'losa', label: 'Losa' },
-  { value: 'pizarreno', label: 'Pizarreño' },
-  { value: 'otro', label: 'Otro' },
+  { value: 'plana', label: 'Plana' },
 ];
 
 // Temporary owner ID for MVP1 (no login)
